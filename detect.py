@@ -5,8 +5,10 @@ from functools import partial
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch_dimcheck import dimchecked
-
-from disk import DISK, Features
+from torchvision.io import read_image
+from disk import DISK
+from openvino import convert_model
+from openvino.runtime import  PartialShape
 
 class Image:
     def __init__(self, bitmap: ['C', 'H', 'W'], fname: str, orig_shape=None):
@@ -254,4 +256,11 @@ if __name__ == '__main__':
     model.load_state_dict(weights)
     model = model.to(DEV)
     
-    described_samples = extract(dataset, args.h5_path)
+    # read the jpg image
+    image = read_image("images_directory/test_image.jpg").to(torch.float32)
+    batched_image = image.unsqueeze(0)
+    input_dimensions = batched_image.shape
+    traced_model = torch.jit.trace(model, torch.randn(input_dimensions))
+    ov_model = convert_model(model, example_input=batched_image,input=PartialShape(input_dimensions))
+    
+    # described_samples = extract(dataset, args.h5_path)

@@ -70,12 +70,12 @@ class Keypoints:
         Select descriptors from a dense `descriptors` tensor, at locations
         given by `self.xys`
         '''
-        x, y = self.xys.T
+        x, y = torch.unbind(self.xys.T)
 
         desc = descriptors[:, y, x].T
         desc = F.normalize(desc, dim=-1)
 
-        return Features(self.xys.to(torch.float32), desc, self.logp)
+        return torch.cat((self.xys.to(torch.float32), desc, self.logp.unsqueeze(1)),dim=1)
 
 class Detector:
     def __init__(self, window=8):
